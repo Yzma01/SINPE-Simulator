@@ -1,6 +1,6 @@
 
-export const fetch = async (url, method, params, body) => {
-    const baseUrl = process.env.BASE_URL;
+export const makeFetch = async (url, method, params, body) => {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
     const apiURL = `${baseUrl + url}${
       params !== "" || params === undefined? "/" + params : ""
     }`;

@@ -1,33 +1,43 @@
-import React from "react";
-import { fetch } from "@/app/utils/fetch.js";
+"use client";
+import React, { useState } from "react";
+import { makeFetch } from "@/app/utils/fetch.js";
+import { useRouter } from "next/navigation";
 
 export default function SignUpComponent({ show }) {
-  let response = null;
+  const [changeLogIn, setChangeLogIn] = useState(false); //luego lo quto
+  const router = useRouter();
 
-  const [identification, setIdentification] = React.useState("");
-  const [name, setName] = React.useState("");
-  const [email, setEmail] = React.useState("");
-  const [phone, setPhone] = React.useState("");
-  const [password, setPassword] = React.useState("");
+  const [identification, setIdentification] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
 
   if (!show) return null;
 
-  const body = {
-    identification: identification,
-    name: name,
-    email: email,
-    phone: phone,
-    password: password,
-  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const handleSubmit = async () => {
-    response = await fetch("/api/client", "POST", "", body);
+    const body = {
+      identification,
+      name,
+      email,
+      phone,
+      password,
+    };
+
+    console.log(body);
+
+    const response = await makeFetch("/api/client", "POST", "", body);
+    if (response.status === 201) {
+      setChangeLogIn(true); //luego lo quitp
+    } 
   };
 
   return (
     <div className="flip-card__back">
       <div className="title">Sign up</div>
-      <form className="flip-card__form" action="">
+      <form className="flip-card__form" onSubmit={handleSubmit}>
         <input
           className="flip-card__input"
           placeholder="Identification"
@@ -41,14 +51,6 @@ export default function SignUpComponent({ show }) {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          className="flip-card__input"
-          name="email"
-          placeholder="Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
         />
         <input
           className="flip-card__input [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
@@ -74,9 +76,8 @@ export default function SignUpComponent({ show }) {
           onChange={(e) => setPassword(e.target.value)}
         />
         <button
-          className={response === 200 ? "flip-card__btn" : ""}
-          type="submit"
-          onClick={handleSubmit}>
+          className={"flip-card__btn"}
+          type="submit">
           Confirm!
         </button>
       </form>

@@ -1,9 +1,13 @@
 "use client";
-import React, { useState } from "react";
-import SignUp from "./signUpComponent";
+import React from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import SignUpComponent from "./signUpComponent";
 
 export default function LogInComponent() {
- 
+  const [chageSignUp, setChangeSignUp] = useState(true);
+  const router = useRouter();
+
   let response = null;
 
   const [showLogIn, setShowLogIn] = useState(false);
@@ -18,6 +22,11 @@ export default function LogInComponent() {
   //!Isma tiene quye definir las rutas de la api
   const handleSubmit = async () => {
     response = await fetch("/api/client", "POST", "", body);
+    if (response.status === 200) {
+      router.push("/home-page");
+    } else {
+      setChangeSignUp(false);
+    }
   };
 
   return (
@@ -35,7 +44,7 @@ export default function LogInComponent() {
             <div className="flip-card__inner">
               <div className="flip-card__front">
                 <div className="title">Log in</div>
-                <form className="flip-card__form" action="">
+                <form className="flip-card__form" action="" onSubmit={handleSubmit}>
                   <input
                     className="flip-card__input"
                     name="email"
@@ -52,19 +61,12 @@ export default function LogInComponent() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
-                  <button
-                    className={
-                      response === 200
-                        ? router.push("/home-page")
-                        : "flip-card__btn"
-                    }
-                    type="submit"
-                    onClick={handleSubmit}>
-                    Let's go!
+                  <button className={"flip-card__btn"} type="submit">
+                    Confirm!
                   </button>
                 </form>
               </div>
-              <SignUp show={showLogIn} />
+              <SignUpComponent show={showLogIn} />
             </div>
           </label>
         </div>
