@@ -1,16 +1,31 @@
-'use client';
+"use client";
 import React, { useState } from "react";
 import SignUp from "./signUpComponent";
 
 export default function LogInComponent() {
+ 
+  let response = null;
+
   const [showLogIn, setShowLogIn] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const body = {
+    email: email,
+    password: password,
+  };
+
+  //!Isma tiene quye definir las rutas de la api
+  const handleSubmit = async () => {
+    response = await fetch("/api/client", "POST", "", body);
+  };
 
   return (
     <div className="justify-center flex items-center h-screen">
       <div className="wrapper">
         <div className="card-switch">
           <label className="switch">
-          <input
+            <input
               type="checkbox"
               className="toggle"
               onChange={(e) => setShowLogIn(e.target.checked)}
@@ -26,14 +41,25 @@ export default function LogInComponent() {
                     name="email"
                     placeholder="Email"
                     type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                   <input
                     className="flip-card__input"
                     name="password"
                     placeholder="Password"
                     type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
-                  <button className="flip-card__btn" type="submit">
+                  <button
+                    className={
+                      response === 200
+                        ? router.push("/home-page")
+                        : "flip-card__btn"
+                    }
+                    type="submit"
+                    onClick={handleSubmit}>
                     Let's go!
                   </button>
                 </form>

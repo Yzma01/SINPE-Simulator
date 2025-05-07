@@ -2,6 +2,8 @@ import React from "react";
 import { fetch } from "@/app/utils/fetch.js";
 
 export default function SignUpComponent({ show }) {
+  let response = null;
+
   const [identification, setIdentification] = React.useState("");
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -19,7 +21,7 @@ export default function SignUpComponent({ show }) {
   };
 
   const handleSubmit = async () => {
-    await fetch("/api/client", "POST", "", body);
+    response = await fetch("/api/client", "POST", "", body);
   };
 
   return (
@@ -71,8 +73,10 @@ export default function SignUpComponent({ show }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button className="flip-card__btn" type="submit">
-          onClick={handleSubmit}
+        <button
+          className={response === 200 ? "flip-card__btn" : ""}
+          type="submit"
+          onClick={handleSubmit}>
           Confirm!
         </button>
       </form>
