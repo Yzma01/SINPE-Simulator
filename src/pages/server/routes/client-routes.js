@@ -4,13 +4,12 @@ export default async function handler(req, res) {
   const { id } = req.query;
   try {
     switch (req.method) {
-    //   case "GET":
-    //     if (id) await getClientById(req, res);
-    //     else await getClients(req, res);
-    //     break;
+      //   case "GET":
+      //     if (id) await getClientById(req, res);
+      //     else await getClients(req, res);
+      //     break;
       case "POST":
-        await addClient(req, res);
-        break;
+        return await addClient(req, res);
       case "PUT":
         break;
       case "DELETE":
