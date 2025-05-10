@@ -8,6 +8,7 @@ import { makeFetch } from "@/app/utils/fetch.js";
 
 export default function LogInComponent() {
   const [chageSignUp, setChangeSignUp] = useState(true);
+  const { setUser } = useUser();
   const router = useRouter();
 
   let response = null;
@@ -18,8 +19,6 @@ export default function LogInComponent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const { setUser } = useUser();
 
     const body = {
       identification: id,

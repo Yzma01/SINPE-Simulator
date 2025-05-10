@@ -2,6 +2,7 @@
 import React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "../Providers/userProvider";
 
 export default function FormComponent() {
   const [amount, setAmount] = useState("");
@@ -10,6 +11,10 @@ export default function FormComponent() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const { user } = useUser();
+
+  console.log("🐕🐕", user)
 
   const handleSubmit = async (e) => {
     e.preventDefault();
