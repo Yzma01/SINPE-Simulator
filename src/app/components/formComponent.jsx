@@ -14,7 +14,7 @@ export default function FormComponent() {
 
   const { user } = useUser();
 
-  console.log("🐕🐕", user)
+  console.log("🐕🐕", user);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,16 +22,44 @@ export default function FormComponent() {
     setError("");
 
     if (!amount || !recipientPhone) {
-      setError("Por favor complete todos los campos requeridos.");
+      setError("Please complete all required fields");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!user || !user.identify) {
+      setError("User information not available");
       setIsLoading(false);
       return;
     }
 
     const body = {
+      clientId: user.identifier,
       amount: parseFloat(amount),
       recipientPhone,
-      description: description || "Transferencia SINPE",
     };
+
+    try {
+      const response = await makeFetch("/api/transaction", "POST", body);
+
+      if (response.token) {
+        const confirmResponse = await makeFetch("/api/transaction", "PUT", {
+          token: response.token,
+        });
+
+        if (confirmResponse.voucher) {
+          setShowConfirmation(true);
+        } else {
+          setError(confirmResponse.message || "Error confirming transaction");
+        }
+      } else {
+        setError(response.message || "Transaction failed");
+      }
+    } catch (error) {
+      console.error("Transaction error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleNewTransaction = () => {
