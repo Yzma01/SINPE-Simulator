@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase";
-import { collection, addDoc, doc } from "firebase/firestore";
+import { collection, addDoc, doc, getDoc, query, where } from "firebase/firestore";
 
 export const clientsRepo = {
   _addClient,
@@ -15,15 +15,17 @@ async function _addClient(req, res) {
 
   try {
     const clientData = {
-      identification: String(req.body.identification || ''),
+      identification: 
+      String(req.body.identification || ''),
       name: String(req.body.name || ''),
       email: String(req.body.email || ''),
       phone: String(req.body.phone || ''),
       password: String(req.body.password || ''),
+      balance: 10000,
       createdAt: new Date()
     };
 
-    const docRef = await addDoc(collectionRef, clientData);
+    await addDoc(collectionRef, clientData);
     
     return res.status(201).json({ 
       message: 'Client created successfully'
@@ -40,8 +42,10 @@ async function _addClient(req, res) {
 async function _getClientById(req, res) {
   const { identification } = req.body;
   try {
-    const client = doc(db, "clients", identification);
-    return res.status(200).json(client);
+    const ref = doc(db, "clients", identification);
+    const client = query(ref, where("identification", "==", identification));
+    const data = (await getDoc(client)).data();
+    return res.status(200).json(data);
   } catch (error) {
     return res.status(404).json({ message: "Client not Found" });
   }

@@ -1,15 +1,14 @@
-import { addClient, getClientById } from "../controllers/client-controller";
+import { confirmTransaction, sendTransaction } from "../controllers/transaction-controller";
 
 export default async function handler(req, res) {
   try {
     switch (req.method) {
         case "GET":
-          await getClientById(req, res);
           break;
       case "POST":
-        return await addClient(req, res);
+        return await sendTransaction(req, res);
       case "PUT":
-        break;
+        return await confirmTransaction(req, res);
       case "DELETE":
         break;
       default:
