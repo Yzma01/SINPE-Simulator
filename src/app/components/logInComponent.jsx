@@ -46,7 +46,7 @@ export default function LogInComponent() {
                 <div className="title">Log in</div>
                 <form className="flip-card__form" action="" onSubmit={handleSubmit}>
                   <input
-                    className="flip-card__input"
+                    className="fabian"
                     name="email"
                     placeholder="Email"
                     type="email"
