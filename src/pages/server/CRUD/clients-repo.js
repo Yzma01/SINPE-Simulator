@@ -16,9 +16,56 @@ export const clientsRepo = {
 
 const collectionRef = collection(db, "clients");
 
+{
+  /*
+    "Status codes": 
+        //! 204 not content (body)
+        //! 201 user create
+        //! 400 failed to create user
+        //! 200 user found
+        //! 404 client not found
+    "Routes":[
+        {
+            "route": "api/client",
+            "method": "POST",
+            "body": {
+                  "identification": "0",
+                  "name": "jorge",
+                  "email": "j@j.j",
+                  "phone": "00000000",
+                  "password": "j",
+                },
+            "response": {
+                "message": "Client created successfully",
+            }
+        },
+        {
+            "route": "api/client",
+            "method": "PUT",
+            "body": {
+                 "identification": "0",
+                  "password": "j"
+                },
+             "response":{
+                  "identification": "0",
+                  "name": "jorge",
+                  "email": "j@j.j",
+                  "phone": "00000000",
+                  "password": "j",
+                  "balance": 10000,
+                  "createdAt": {
+                      "seconds": 1746838448,
+                      "nanoseconds": 240000000
+                }
+            }  
+        },
+    ]
+*/
+}
+
 async function _addClient(req, res) {
   if (!req.body) {
-    return res.status(400).json({ message: "Request body is required" });
+    return res.status(204).json({ message: "Request body is required" });
   }
 
   try {

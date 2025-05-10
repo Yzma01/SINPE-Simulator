@@ -3,6 +3,7 @@ import React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "../Providers/userProvider";
+import { makeFetch } from "../utils/fetch";
 
 export default function FormComponent() {
   const [amount, setAmount] = useState("");
@@ -36,24 +37,25 @@ export default function FormComponent() {
     const body = {
       clientId: user.identification,
       amount: parseFloat(amount),
-      recipientPhone,
+      recipientPhone:recipientPhone,
     };
 
     try {
-      const response = await makeFetch("/api/transaction", "POST", body);
-
-      if (response.token) {
-        const confirmResponse = await makeFetch("/api/transaction", "PUT", {
-          token: response.token,
+      const response = await makeFetch("/api/transaction", "POST","", body);
+      const data = await response.json();
+      if (data.token) {
+         console.log()
+        const response = await makeFetch("/api/transaction", "PUT","", {
+          token: data.token,
         });
-
+        const confirmResponse = await response.json();
         if (confirmResponse.voucher) {
           setShowConfirmation(true);
         } else {
           setError(confirmResponse.message || "Error confirming transaction");
         }
       } else {
-        setError(response.message || "Transaction failed");
+        setError(data.message || "Transaction failed");
       }
     } catch (error) {
       console.error("Transaction error:", error);
