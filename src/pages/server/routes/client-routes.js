@@ -1,17 +1,12 @@
-import { addClient, getClientById } from "../controllers/client-controller";
+import { addClient, getClient } from "../controllers/client-controller";
 
 export default async function handler(req, res) {
   try {
     switch (req.method) {
-        case "GET":
-          await getClientById(req, res);
-          break;
       case "POST":
         return await addClient(req, res);
       case "PUT":
-        break;
-      case "DELETE":
-        break;
+        return await getClient(req, res);
       default:
         res.status(405).json({ message: "Method not Allowed" });
         break;
