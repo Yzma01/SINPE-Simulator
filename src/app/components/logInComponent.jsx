@@ -3,6 +3,8 @@ import React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import SignUpComponent from "./signUpComponent";
+import { useUser } from "../Providers/userProvider";
+import { makeFetch } from "@/app/utils/fetch.js";
 
 export default function LogInComponent() {
   const [chageSignUp, setChangeSignUp] = useState(true);
@@ -11,18 +13,27 @@ export default function LogInComponent() {
   let response = null;
 
   const [showLogIn, setShowLogIn] = useState(false);
-  const [email, setEmail] = useState("");
+  const [id, setId] = useState("");
   const [password, setPassword] = useState("");
 
-  const body = {
-    email: email,
-    password: password,
-  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  //!Isma tiene quye definir las rutas de la api
-  const handleSubmit = async () => {
-    response = await fetch("/api/client", "POST", "", body);
+    const { setUser } = useUser();
+
+    const body = {
+      identification: id,
+      password: password,
+    };
+
+    response = await makeFetch("/api/client", "PUT", "", body);
+
+    const user = await response.json();
+
+    console.log("🫏🫏", user);
+
     if (response.status === 200) {
+      setUser(user);
       router.push("/home-page");
     } else {
       setChangeSignUp(false);
@@ -44,14 +55,14 @@ export default function LogInComponent() {
             <div className="flip-card__inner">
               <div className="flip-card__front">
                 <div className="title">Log in</div>
-                <form className="flip-card__form" action="" onSubmit={handleSubmit}>
+                <form className="flip-card__form" onSubmit={handleSubmit}>
                   <input
                     className="flip-card__input"
-                    name="email"
-                    placeholder="Email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    name="id"
+                    placeholder="Identification"
+                    type="text"
+                    value={id}
+                    onChange={(e) => setId(e.target.value)}
                   />
                   <input
                     className="flip-card__input"
