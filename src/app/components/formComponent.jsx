@@ -44,7 +44,6 @@ export default function FormComponent() {
       const response = await makeFetch("/api/transaction", "POST","", body);
       const data = await response.json();
       if (data.token) {
-         console.log()
         const response = await makeFetch("/api/transaction", "PUT","", {
           token: data.token,
         });
