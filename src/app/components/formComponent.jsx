@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "../Providers/userProvider";
 import { makeFetch } from "../utils/fetch";
+import ConfirmTransactionComponent from "./confirmTransactionComponent";
 
 export default function FormComponent() {
   const [amount, setAmount] = useState("");
@@ -12,10 +13,10 @@ export default function FormComponent() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [transactionData, setTransactionData] = useState(null);
+  const [confirmationStep, setConfirmationStep] = useState(false);
 
   const { user } = useUser();
-
-  console.log("🐕🐕", user);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,41 +38,99 @@ export default function FormComponent() {
     const body = {
       clientId: user.identification,
       amount: parseFloat(amount),
-      recipientPhone:recipientPhone,
+      recipientPhone: recipientPhone,
     };
 
     try {
-      const response = await makeFetch("/api/transaction", "POST","", body);
+      const response = await makeFetch("/api/transaction", "POST", "", body);
       const data = await response.json();
-      if (data.token) {
-        const response = await makeFetch("/api/transaction", "PUT","", {
-          token: data.token,
-        });
-        const confirmResponse = await response.json();
-        if (confirmResponse.voucher) {
-          setShowConfirmation(true);
-        } else {
-          setError(confirmResponse.message || "Error confirming transaction");
-        }
+      
+      console.log(data);
+
+      if (data && data.token) {
+        setTransactionData(data);
+        setConfirmationStep(true);
       } else {
-        setError(data.message || "Transaction failed");
+        setError(data?.message || "Transaction failed");
       }
     } catch (error) {
       console.error("Transaction error:", error);
+      setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleConfirmTransaction = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await makeFetch("/api/transaction", "PUT", "", {
+        token: transactionData.token,
+      });
+      const confirmResponse = await response.json();
+      
+      if (confirmResponse.voucher) {
+        setConfirmationStep(false);
+        setShowConfirmation(true);
+      } else {
+        setError(confirmResponse.message || "Error confirming transaction");
+      }
+    } catch (error) {
+      console.error("Confirmation error:", error);
+      setError("An error occurred during confirmation. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelTransaction = () => {
+    setConfirmationStep(false);
+    setTransactionData(null);
+  };
+
   const handleNewTransaction = () => {
     setShowConfirmation(false);
+    setAmount("");
+    setRecipientPhone("");
+    setDescription("");
+    setTransactionData(null);
   };
 
   return (
     <div className="flex justify-center items-center h-screen">
       <div className="w-96 p-5 bg-gray-300 rounded-md border-2 border-gray-800 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)]">
         <div className="relative w-full text-center">
-          {!showConfirmation ? (
+          {showConfirmation ? (
+            <div className="flex flex-col items-center gap-5 py-5 animate-[fadeIn_0.5s_ease-in-out]">
+              <div className="my-5 text-2xl font-black text-center text-gray-800">
+                Successful Transfer!
+              </div>
+              <div className="w-full p-4 bg-white border-2 border-gray-800 rounded-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)]">
+                <p className="my-2 font-semibold text-gray-800">
+                  You have sent ₡{amount} to the number {recipientPhone}.
+                </p>
+                <p className="my-2 text-sm italic font-semibold text-gray-800">
+                  Description: {description || "Transferencia SINPE"}
+                </p>
+              </div>
+              <button
+                className="w-44 h-11 my-5 px-4 py-2 text-gray-800 font-semibold bg-white border-2 border-gray-800 rounded-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] transition duration-200 hover:bg-blue-500 hover:text-white active:shadow-none active:translate-x-1 active:translate-y-1"
+                onClick={handleNewTransaction}
+              >
+                New Transfer
+              </button>
+            </div>
+          ) : confirmationStep && transactionData ? (
+            <ConfirmTransactionComponent 
+              transactionData={transactionData}
+              amount={amount}
+              onConfirm={handleConfirmTransaction}
+              onCancel={handleCancelTransaction}
+              isLoading={isLoading}
+            />
+          ) : (
             <>
               <div className="my-5 text-2xl font-black text-center text-gray-800">
                 ROMAAR
@@ -121,26 +180,6 @@ export default function FormComponent() {
                 </button>
               </form>
             </>
-          ) : (
-            <div className="flex flex-col items-center gap-5 py-5 animate-[fadeIn_0.5s_ease-in-out]">
-              <div className="my-5 text-2xl font-black text-center text-gray-800">
-                Successful Transfer!
-              </div>
-              <div className="w-full p-4 bg-white border-2 border-gray-800 rounded-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)]">
-                <p className="my-2 font-semibold text-gray-800">
-                  You have sent ₡{amount} to the number {recipientPhone}.
-                </p>
-                <p className="my-2 text-sm italic font-semibold text-gray-800">
-                  Description: {description || "Transferencia SINPE"}
-                </p>
-              </div>
-              <button
-                className="w-44 h-11 my-5 px-4 py-2 text-gray-800 font-semibold bg-white border-2 border-gray-800 rounded-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] transition duration-200 hover:bg-blue-500 hover:text-white active:shadow-none active:translate-x-1 active:translate-y-1"
-                onClick={handleNewTransaction}
-              >
-                New Transfer
-              </button>
-            </div>
           )}
         </div>
       </div>
