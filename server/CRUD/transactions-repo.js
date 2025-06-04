@@ -1,3 +1,4 @@
+import { makeFetch } from "../../src/app/utils/fetch.js";
 import { db } from "../db/connection.js";
 
 export const transactionsRepo = {
@@ -77,12 +78,7 @@ async function _sendTransaction(req, res) {
   const recipient = await db.Clients.findOne({ cli_phone: body.num_receptor });
 
   if (!recipient) {
-    //! enviar afuera
-    // TODO sacar el prefijo del número 69xxxxxxxx
-    // TODO sacar la ruta del banco con https://[ip]/get_api_key/[prefijo]
-    // TODO Agregar el api_key del banco emisor, nuestro banco, al body de la petición
-    // TODO enviar la petición a la ruta
-    return res.status(404).json({ message: "Phone no found" });
+    const status = await _sendTransactionToOtherBank(body, recipient); 
   }
 
   if (!canMakeTransaction(client.cli_balance, body.amount)) {
@@ -112,6 +108,39 @@ async function _sendTransaction(req, res) {
       phone: recipient.cli_phone,
     },
   });
+}
+
+async function _sendTransactionToOtherBank(body, recipient) {
+  //! enviar afuera
+    // TODO sacar el prefijo del número 69xxxxxxxx
+    // TODO sacar la ruta del banco con https://[ip]/get_api_key/[prefijo]
+    // TODO Agregar el api_key del banco emisor, nuestro banco, al body de la petición
+    // TODO enviar la petición a la ruta
+
+    const prefix = getPrefix(recipient.cli_phone);
+    console.log("prefijo: ",prefix)
+
+    const responseDestinationBank = await makeFetch(process.env.NEXT_PUBLIC_GET_API_KEY_URL, "GET", prefix);
+    const destinationBankData = await responseDestinationBank.json();
+    console.log("destino: ",destinationBankData);
+
+    const responseIssuingBank = await makeFetch(process.env.NEXT_PUBLIC_GET_API_KEY_URL, "GET", process.env.NEXT_PUBLIC_LOCAL_PREFIX);
+    const issuingBankData = await responseIssuingBank.json();
+    console.log("emisor: ",issuingBankData);
+
+    const newBody = {...body, key_emisor: issuingBankData.api_key};
+    console.log("newbody: ",newBody);
+    
+    const response = await makeFetch(destinationBankData.route, "POST", "", newBody);
+    if(response.status == 200){
+      //guardar transacción
+      return res.status(404).json({message: "Money Sent"});
+    }
+    return res.status(500).json({ message: "Internal Server Error" });
+}
+
+function getPrefix(phone){
+  return phone.substring(0,1);
 }
 
 async function _confirmTransaction(req, res) {
