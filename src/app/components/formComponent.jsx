@@ -42,7 +42,7 @@ export default function FormComponent() {
     };
 
     try {
-      const response = await makeFetch("/api/transaction", "POST", "", body);
+      const response = await makeFetch("/transaction/send", "POST", "", body);
       const data = await response.json();
       
       console.log(data);
@@ -66,7 +66,7 @@ export default function FormComponent() {
     setError("");
 
     try {
-      const response = await makeFetch("/api/transaction", "PUT", "", {
+      const response = await makeFetch("/transaction/confirm", "POST", "", {
         token: transactionData.token,
       });
       const confirmResponse = await response.json();
