@@ -9,6 +9,8 @@ export default function SignUpComponent({ show }) {
 
   const [identification, setIdentification] = useState("");
   const [name, setName] = useState("");
+  const [lastname, setLastname] = useState("");
+
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -19,11 +21,12 @@ export default function SignUpComponent({ show }) {
     e.preventDefault();
 
     const body = {
-      identification,
-      name,
-      email,
-      phone,
-      password,
+      cli_id: identification,
+      cli_nombre: name,
+      cli_apellido: lastname,
+      cli_telefono: phone,
+      cli_email: email,
+      cli_password: password,
     };
 
     console.log(body);
@@ -32,7 +35,7 @@ export default function SignUpComponent({ show }) {
     if (response.status === 201) {
       alert("User created successfully");
       setChangeLogIn(true); //luego lo quitp
-    } 
+    }
   };
 
   return (
@@ -52,6 +55,13 @@ export default function SignUpComponent({ show }) {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
+        />
+        <input
+          className="flip-card__input"
+          placeholder="Lastname"
+          type="text"
+          value={lastname}
+          onChange={(e) => setLastname(e.target.value)}
         />
         <input
           className="flip-card__input [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
@@ -76,9 +86,7 @@ export default function SignUpComponent({ show }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button
-          className={"flip-card__btn"}
-          type="submit">
+        <button className={"flip-card__btn"} type="submit">
           Confirm!
         </button>
       </form>

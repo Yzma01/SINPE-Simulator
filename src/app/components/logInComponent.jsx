@@ -25,7 +25,7 @@ export default function LogInComponent() {
       password: password,
     };
 
-    response = await makeFetch("/api/client", "PUT", "", body);
+    response = await makeFetch("/client", "GET", "", body);
 
     const user = await response.json();
 

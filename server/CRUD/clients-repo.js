@@ -4,6 +4,8 @@ export const clientsRepo = {
   _getClient,
 };
 
+const INITIAL_BALANCE = 6996;
+
 async function _addClient(req, res) {
   if (!req.body) {
     return res.status(204).json({ message: "Request body is required" });
@@ -15,7 +17,6 @@ async function _addClient(req, res) {
       cli_nombre,
       cli_apellido,
       cli_telefono,
-      cli_balance,
       cli_email,
       cli_password,
     } = req.body;
@@ -30,7 +31,7 @@ async function _addClient(req, res) {
       cli_nombre,
       cli_apellido,
       cli_telefono,
-      cli_balance,
+      cli_balance: INITIAL_BALANCE,
       cli_email,
       cli_password,
     });
