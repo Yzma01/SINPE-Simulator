@@ -1,20 +1,9 @@
-import { db } from "@/lib/firebase";
-import {
-  addDoc,
-  collection,
-  getDocs,
-  query,
-  updateDoc,
-  where,
-} from "firebase/firestore";
-import { createTransactionToken, verifyTransactionToken } from "../utils/token";
+import { db } from "../db/connection.js";
 
 export const transactionsRepo = {
   _sendTransaction,
   _confirmTransaction,
 };
-
-const collectionRef = collection(db, "transactions");
 
 {
   /*
@@ -79,37 +68,43 @@ async function _sendTransaction(req, res) {
     return res.status(204).json({ message: "Request body required" });
   }
 
-  const client = await getData("clients", body.clientId, true);
-  if (verifyData(client))
+  const client = await db.Clients.findOne({ cli_id: body.clientId });
+
+  if (!client) {
     return res.status(404).json({ message: "client not found" });
+  }
 
-  const recipient = await getData("clients", body.recipientPhone, false);
-  if (verifyData(recipient))
-    return res.status(404).json({ message: "recipient not found" });
+  const recipient = await db.Clients.findOne({ cli_phone: body.num_receptor });
 
-  if (!canMakeTransaction(client.data.balance, body.amount)) {
+  if (!recipient) {
+    return res.status(404).json({ message: "Phone no found" });
+  }
+
+  if (!canMakeTransaction(client.cli_balance, body.amount)) {
     return res.status(507).json({ message: "Not enough money" });
   }
+
   const token = createTransactionToken({
-    clientId: client.data.identification,
-    recipientId: recipient.data.identification,
+    clientId: client.cli_id,
+    recipientId: recipient.cli_id,
     amount: body.amount,
-    lastClientBalance: client.data.balance,
+    lastClientBalance: client.cli_balance,
     body: body,
   });
 
   return res.status(202).json({
     message: "transaction accepted waiting for confirmation",
     client: {
-      name: client.data.name,
-      id: client.data.identification,
-      phone: client.data.balance,
+      name: client.cli_name,
+      id: client.cli_id,
+      phone: client.cli_phone,
+      balance: client.cli_balance,
     },
     token: token,
     recipient: {
-      name: recipient.data.name,
-      id: recipient.data.id,
-      phone: recipient.data.phone,
+      name: recipient.cli_name,
+      id: recipient.cli_id,
+      phone: recipient.cli_phone,
     },
   });
 }
@@ -126,66 +121,67 @@ async function _confirmTransaction(req, res) {
 
   const { clientId, recipientId, lastClientBalance, amount, body } = payload;
 
-  const client = await getData("clients", clientId, true);
-  if (verifyData(client)) {
+  const client = await db.Clients.findOne({ cli_id: clientId });
+
+  if (!client) {
     return res.status(404).json({ message: "Client not found" });
   }
-  if (lastClientBalance != client.data.balance) {
+
+  // if (used) {
+  //   return res.status(403).json({ message: "Token already used" });
+  // }
+
+  if (lastClientBalance != client.cli_balance) {
     return res.status(403).json({ message: "Token already used" });
   }
 
-  const recipient = await getData("clients", recipientId, true);
-  if (verifyData(recipient)) {
+  const recipient = await db.Clients.findOne({ cli_id: recipientId });
+
+  if (!recipient) {
     return res.status(404).json({ message: "Recipient not found" });
   }
 
-  if (!canMakeTransaction(client.data.balance, amount)) {
+  if (!canMakeTransaction(client.cli_balance, amount)) {
     return res.status(507).json({ message: "Not enough money" });
   }
 
-  await updateBalance(amount * -1, client.ref, client.data);
-  await updateBalance(amount, recipient.ref, recipient.data);
+  await updateBalance(amount * -1, client);
+
+  await updateBalance(amount, recipient);
+
   const transaction = {
-    trasaction: body,
-    lastClientBalance: client.data.balance,
-    recipientId: recipient.data.identification,
-    createAt: new Date(),
+    tra_num_emisor: body.tra_num_emisor,
+    tra_num_receptor: body.num_receptor,
+    tra_amount: body.monto,
+    tra_details: body.detalle,
+    tra_date: new Date(),
   };
-  await addDoc(collectionRef, transaction);
+
+  await transaction.save();
+
   return res
     .status(214)
     .json({ message: "transaction succesfully", voucher: transaction });
 }
 
-function verifyData(data) {
-  console.log(data)
-  if (data && (!data.ref || !data.data)) {
-    return true;
-  }
-  return false;
-}
+async function updateBalance(amount, account) {
+  try {
+    const data = await db.Clients.findOne({ cli_id: account.cli_id });
 
-async function getData(collectionName, id, client) {
-  const ref = collection(db, collectionName);
-  let clients;
-  if (client) {
-    clients = query(ref, where("identification", "==", id));
-  } else {
-    clients = query(ref, where("phone", "==", id));
-  }
-  const snapshots = await getDocs(clients);
+    if (!data) {
+     return res.status(404).json({ message: "Client not found" });
+    }
 
-  if (!snapshots.empty) {
-    const snapshot = snapshots.docs[0];
-    const data = snapshot.data();
-    const docRef = snapshot.ref;
-    return { ref: docRef, data: data };
-  }
-  return null;
-}
+  data.cli_balance = data.cli_balance + amount;
 
-async function updateBalance(amount, ref, data) {
-  await updateDoc(ref, { balance: data.balance + amount });
+  await aux.save();
+
+  } catch (error) {
+    throw {
+      status: 404,
+      message: "No se pudo modificar los daos del cliente"
+    }
+  }
 }
 
 function canMakeTransaction(balance, amount) {
