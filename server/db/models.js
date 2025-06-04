@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 
-
 const ClientSchema = new mongoose.Schema({
   cli_id: { type: String, unique: true, required: true },
   cli_name: { type: String, required: true },
@@ -12,7 +11,7 @@ const ClientSchema = new mongoose.Schema({
 });
 
 const Client = mongoose.models.Client || mongoose.model("Client", ClientSchema);
-export default Client;
+export { Client };
 
 const TransactionSchema = new mongoose.Schema({
   tra_id: { type: String, unique: true, required: true },
@@ -23,5 +22,7 @@ const TransactionSchema = new mongoose.Schema({
   tra_date: { type: Date, required: true },
 });
 
-const Transaction = mongoose.models.Transaction || mongoose.model("Transaction", TransactionSchema);
+const Transaction =
+  mongoose.models.Transaction ||
+  mongoose.model("Transaction", TransactionSchema);
 export { Transaction };

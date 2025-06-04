@@ -1,4 +1,4 @@
-import { transactionsRepo } from "../CRUD/transactions-repo";
+import { transactionsRepo } from "../CRUD/transactions-repo.js";
 
 export const sendTransaction = async (req, res)=>{
     await transactionsRepo._sendTransaction(req, res);

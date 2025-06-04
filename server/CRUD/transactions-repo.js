@@ -77,6 +77,11 @@ async function _sendTransaction(req, res) {
   const recipient = await db.Clients.findOne({ cli_phone: body.num_receptor });
 
   if (!recipient) {
+    //! enviar afuera
+    // TODO sacar el prefijo del número 69xxxxxxxx
+    // TODO sacar la ruta del banco con https://[ip]/get_api_key/[prefijo]
+    // TODO Agregar el api_key del banco emisor, nuestro banco, al body de la petición
+    // TODO enviar la petición a la ruta
     return res.status(404).json({ message: "Phone no found" });
   }
 

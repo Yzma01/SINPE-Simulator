@@ -1,4 +1,4 @@
-import { clientsRepo } from "@/pages/server/CRUD/clients-repo.js";
+import { clientsRepo } from "../CRUD/clients-repo.js";
 
 export const getClient = async (req, res) => {
   await clientsRepo._getClient(req, res);

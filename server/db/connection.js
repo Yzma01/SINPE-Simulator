@@ -2,10 +2,7 @@ import mongoose from "mongoose";
 import { Client, Transaction} from "./models.js";
 
 mongoose
-  .connect("mongodb://localhost:27017/romar", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect("mongodb://localhost:27017/romar")
   .then(() => {
     console.log("MongoDB connected successfully");
   })
