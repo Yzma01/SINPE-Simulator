@@ -158,7 +158,8 @@ async function _confirmTransaction(req, res) {
 }
 
 function verifyData(data) {
-  if (!data.ref || !data.data) {
+  console.log(data)
+  if (data && (!data.ref || !data.data)) {
     return true;
   }
   return false;
