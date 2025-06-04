@@ -1,8 +1,7 @@
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
-export const makeFetch = async (url, method, params, body) => {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-    const apiURL = `${baseUrl + url}${
+export const serverFetch = async (url, method, params, body) => {
+    const apiURL = `${url}${
       params !== "" || params === undefined? "/" + params : ""
     }`;
     

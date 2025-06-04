@@ -28,9 +28,9 @@ async function _addClient(req, res) {
 
     const newClient = new db.Clients({
       cli_id,
-      cli_nombre,
-      cli_apellido,
-      cli_telefono,
+      cli_name: cli_nombre,
+      cli_lastname: cli_apellido,
+      cli_phone: cli_telefono,
       cli_balance: INITIAL_BALANCE,
       cli_email,
       cli_password,

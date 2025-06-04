@@ -1,5 +1,6 @@
 import { makeFetch } from "../../src/app/utils/fetch.js";
 import { db } from "../db/connection.js";
+import { serverFetch } from "../utils/serverFetch.js";
 
 export const transactionsRepo = {
   _sendTransaction,
@@ -75,10 +76,12 @@ async function _sendTransaction(req, res) {
     return res.status(404).json({ message: "client not found" });
   }
 
-  const recipient = await db.Clients.findOne({ cli_phone: body.num_receptor });
+  const recipient = await db.Clients.findOne({
+    cli_phone: body.recipientPhone,
+  });
 
   if (!recipient) {
-    const status = await _sendTransactionToOtherBank(body, recipient); 
+    const status = await _sendTransactionToOtherBank(body, recipient);
   }
 
   if (!canMakeTransaction(client.cli_balance, body.amount)) {
@@ -110,37 +113,52 @@ async function _sendTransaction(req, res) {
   });
 }
 
-async function _sendTransactionToOtherBank(body, recipient) {
+async function _sendTransactionToOtherBank(body) {
   //! enviar afuera
-    // TODO sacar el prefijo del número 69xxxxxxxx
-    // TODO sacar la ruta del banco con https://[ip]/get_api_key/[prefijo]
-    // TODO Agregar el api_key del banco emisor, nuestro banco, al body de la petición
-    // TODO enviar la petición a la ruta
+  // TODO sacar el prefijo del número 69xxxxxxxx
+  // TODO sacar la ruta del banco con https://[ip]/get_api_key/[prefijo]
+  // TODO Agregar el api_key del banco emisor, nuestro banco, al body de la petición
+  // TODO enviar la petición a la ruta
 
-    const prefix = getPrefix(recipient.cli_phone);
-    console.log("prefijo: ",prefix)
+  const prefix = body.recipientPhone.substring(0, 2);
 
-    const responseDestinationBank = await makeFetch(process.env.NEXT_PUBLIC_GET_API_KEY_URL, "GET", prefix);
-    const destinationBankData = await responseDestinationBank.json();
-    console.log("destino: ",destinationBankData);
+  console.log("first: ", process.env.GET_API_KEY_URL);
 
-    const responseIssuingBank = await makeFetch(process.env.NEXT_PUBLIC_GET_API_KEY_URL, "GET", process.env.NEXT_PUBLIC_LOCAL_PREFIX);
-    const issuingBankData = await responseIssuingBank.json();
-    console.log("emisor: ",issuingBankData);
+  const responseDestinationBank = await serverFetch(
+    process.env.GET_API_KEY_URL,
+    "GET",
+    prefix
+  );
 
-    const newBody = {...body, key_emisor: issuingBankData.api_key};
-    console.log("newbody: ",newBody);
-    
-    const response = await makeFetch(destinationBankData.route, "POST", "", newBody);
-    if(response.status == 200){
-      //guardar transacción
-      return res.status(404).json({message: "Money Sent"});
-    }
-    return res.status(500).json({ message: "Internal Server Error" });
-}
+  const destinationBankData = await responseDestinationBank.json();
+  console.log("destino: ", destinationBankData);
 
-function getPrefix(phone){
-  return phone.substring(0,1);
+  const responseIssuingBank = await serverFetch(
+    process.env.GET_API_KEY_URL,
+    "GET",
+    process.env.LOCAL_PREFIX
+  );
+
+  const issuingBankData = await responseIssuingBank.json();
+  console.log("emisor: ", issuingBankData);
+
+  const newBody = { ...body, key_emisor: issuingBankData.api_key };
+  console.log("newbody: ", newBody);
+
+  const response = await serverFetch(
+    destinationBankData.route,
+    "POST",
+    "",
+    newBody
+  );
+
+  if (response && response.status == 200) {
+    //guardar transacción
+    return res.status(200).json({ message: "Money Sent" });
+  }else{
+    return res.status(404).json({message: "Bank not found"});
+  }
+  return res.status(500).json({ message: "Internal Server Error" });
 }
 
 async function _confirmTransaction(req, res) {
@@ -203,18 +221,17 @@ async function updateBalance(amount, account) {
     const data = await db.Clients.findOne({ cli_id: account.cli_id });
 
     if (!data) {
-     return res.status(404).json({ message: "Client not found" });
+      return res.status(404).json({ message: "Client not found" });
     }
 
-  data.cli_balance = data.cli_balance + amount;
+    data.cli_balance = data.cli_balance + amount;
 
-  await aux.save();
-
+    await aux.save();
   } catch (error) {
     throw {
       status: 404,
-      message: "No se pudo modificar los daos del cliente"
-    }
+      message: "No se pudo modificar los daos del cliente",
+    };
   }
 }
 

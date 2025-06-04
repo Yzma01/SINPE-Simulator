@@ -31,7 +31,7 @@ export default function SignUpComponent({ show }) {
 
     console.log(body);
 
-    const response = await makeFetch("/api/client", "POST", "", body);
+    const response = await makeFetch("/client", "POST", "", body);
     if (response.status === 201) {
       alert("User created successfully");
       setChangeLogIn(true); //luego lo quitp
