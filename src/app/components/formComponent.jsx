@@ -38,6 +38,7 @@ export default function FormComponent() {
     const body = {
       clientId: user.cli_id,
       emisorPhone: user.cli_phone,
+      details: description,
       amount: parseFloat(amount),
       recipientPhone: recipientPhone,
     };
@@ -70,7 +71,9 @@ export default function FormComponent() {
       const response = await makeFetch("/transaction/confirm", "POST", "", {
         token: transactionData.token,
       });
+      console.log(response)
       const confirmResponse = await response.json();
+      console.log(confirmResponse);
       
       if (confirmResponse.voucher) {
         setConfirmationStep(false);

@@ -1,6 +1,7 @@
 import { makeFetch } from "../../src/app/utils/fetch.js";
 import { db } from "../db/connection.js";
 import { serverFetch } from "../utils/serverFetch.js";
+import { createTransactionToken, verifyTransactionToken } from "../utils/token.js";
 
 export const transactionsRepo = {
   _sendTransaction,
@@ -81,7 +82,7 @@ async function _sendTransaction(req, res) {
   });
 
   if (!recipient) {
-    const status = await _sendTransactionToOtherBank(body, recipient);
+    const status = await _sendTransactionToOtherBank(body, res);
   }
 
   if (!canMakeTransaction(client.cli_balance, body.amount)) {
@@ -113,7 +114,7 @@ async function _sendTransaction(req, res) {
   });
 }
 
-async function _sendTransactionToOtherBank(body) {
+async function _sendTransactionToOtherBank(body, res) {
   //! enviar afuera
   // TODO sacar el prefijo del número 69xxxxxxxx
   // TODO sacar la ruta del banco con https://[ip]/get_api_key/[prefijo]
@@ -171,9 +172,14 @@ async function _confirmTransaction(req, res) {
       .json({ message: "Invalid Token or already expired" });
   }
 
+
+  console.log("payload: ",payload);
+
   const { clientId, recipientId, lastClientBalance, amount, body } = payload;
 
   const client = await db.Clients.findOne({ cli_id: clientId });
+
+  console.log("client: ",client);
 
   if (!client) {
     return res.status(404).json({ message: "Client not found" });
@@ -188,10 +194,14 @@ async function _confirmTransaction(req, res) {
   }
 
   const recipient = await db.Clients.findOne({ cli_id: recipientId });
+  
+  console.log("recipient: ",recipient);
 
   if (!recipient) {
     return res.status(404).json({ message: "Recipient not found" });
   }
+
+  console.log("antes de")
 
   if (!canMakeTransaction(client.cli_balance, amount)) {
     return res.status(507).json({ message: "Not enough money" });
@@ -201,13 +211,16 @@ async function _confirmTransaction(req, res) {
 
   await updateBalance(amount, recipient);
 
-  const transaction = {
-    tra_num_emisor: body.tra_num_emisor,
-    tra_num_receptor: body.num_receptor,
-    tra_amount: body.monto,
-    tra_details: body.detalle,
+  const transaction = new db.Transactions( {
+    tra_num_emisor: body.emisorPhone,
+    tra_num_receptor: body.recipientPhone,
+    tra_amount: body.amount,
+    tra_details: body.details,
     tra_date: new Date(),
-  };
+  });
+
+  console.log(body)
+  console.log(transaction);
 
   await transaction.save();
 
@@ -226,7 +239,7 @@ async function updateBalance(amount, account) {
 
     data.cli_balance = data.cli_balance + amount;
 
-    await aux.save();
+    await data.save();
   } catch (error) {
     throw {
       status: 404,
