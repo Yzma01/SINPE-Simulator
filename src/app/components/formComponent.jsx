@@ -31,14 +31,14 @@ export default function FormComponent() {
       return;
     }
 
-    if (!user || !user.identification) {
+    if (!user || !user.cli_id) {
       setError("User information not available");
       setIsLoading(false);
       return;
     }
 
     const body = {
-      clientId: user.identification,
+      clientId: user.cli_id,
       amount: parseFloat(amount),
       recipientPhone: recipientPhone,
     };
