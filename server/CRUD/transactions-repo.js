@@ -243,6 +243,7 @@ async function updateBalance(amount, account) {
 }
 
 async function _reciveTransaction(req, res) {
+  console.log(req.body);
   if (await !bankIsValid(req.body)) {
     return res.status(404).send({ status: 500, message: "Api key no válida" });
   }
@@ -262,7 +263,7 @@ async function _reciveTransaction(req, res) {
 }
 
 async function bankIsValid(body) {
-  const prefix = body.num_emisor.substring(0, 2);
+  const prefix = body.num_receptor.substring(0, 2);
   const response = await serverFetch(
     process.env.GET_API_KEY_URL,
     "GET",
