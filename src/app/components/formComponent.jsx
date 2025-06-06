@@ -18,8 +18,6 @@ export default function FormComponent() {
 
   const { user } = useUser();
 
-  console.log("🐢🐢🐢",user);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -39,6 +37,8 @@ export default function FormComponent() {
 
     const body = {
       clientId: user.cli_id,
+      emisorPhone: user.cli_phone,
+      details: description,
       amount: parseFloat(amount),
       recipientPhone: recipientPhone,
     };
@@ -71,7 +71,9 @@ export default function FormComponent() {
       const response = await makeFetch("/transaction/confirm", "POST", "", {
         token: transactionData.token,
       });
+      console.log(response)
       const confirmResponse = await response.json();
+      console.log(confirmResponse);
       
       if (confirmResponse.voucher) {
         setConfirmationStep(false);
@@ -134,9 +136,6 @@ export default function FormComponent() {
             />
           ) : (
             <>
-              <div className="my-5 text-2xl font-black text-center text-gray-800">
-                Mi saldo: {user.cli_balance}
-              </div>
               <div className="my-5 text-2xl font-black text-center text-gray-800">
                 ROMAAR
               </div>
