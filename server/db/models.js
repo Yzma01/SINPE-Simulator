@@ -1,11 +1,10 @@
-import { increment } from "firebase/firestore";
 import mongoose from "mongoose";
 
 const ClientSchema = new mongoose.Schema({
   cli_id: { type: String, unique: true, required: true },
   cli_name: { type: String, required: true },
   cli_lastname: { type: String, required: true },
-  cli_phone: { type: String, required: true },
+  cli_phone: { type: String, required: true, unique: true },
   cli_balance: { type: Number, required: true },
   cli_email: { type: String, required: true },
   cli_password: { type: String, required: true },
