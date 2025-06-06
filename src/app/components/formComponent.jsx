@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "../Providers/userProvider";
@@ -8,6 +8,7 @@ import ConfirmTransactionComponent from "./confirmTransactionComponent";
 
 export default function FormComponent() {
   const [amount, setAmount] = useState("");
+
   const [recipientPhone, setRecipientPhone] = useState("");
   const [description, setDescription] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -16,7 +17,10 @@ export default function FormComponent() {
   const [transactionData, setTransactionData] = useState(null);
   const [confirmationStep, setConfirmationStep] = useState(false);
 
-  const { user } = useUser();
+  const [show, setShow] = useState(false);
+
+  const {user} = useUser();
+  console.log("papapappaa:", user)
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,15 +47,14 @@ export default function FormComponent() {
       recipientPhone: recipientPhone,
     };
 
-    console.log("object", body)
+    console.log("object", body);
     try {
-      console.log("🍫🍫")
+      console.log("🍫🍫");
       const response = await makeFetch("/transaction/send", "POST", "", body);
       console.log("✅✅✅");
-      console.log("haaaaaaaaaaaaaaaa", await response.json());
+
       const data = await response.json();
 
-      
       console.log(data);
 
       if (data && data.token) {
@@ -76,10 +79,10 @@ export default function FormComponent() {
       const response = await makeFetch("/transaction/confirm", "POST", "", {
         token: transactionData.token,
       });
-      console.log(response)
+      console.log(response);
       const confirmResponse = await response.json();
       console.log(confirmResponse);
-      
+
       if (confirmResponse.voucher) {
         setConfirmationStep(false);
         setShowConfirmation(true);
@@ -97,6 +100,11 @@ export default function FormComponent() {
   const handleCancelTransaction = () => {
     setConfirmationStep(false);
     setTransactionData(null);
+  };
+
+  const showInfo = () => {
+    console.log("❌❌❌")
+    setShow(true);
   };
 
   const handleNewTransaction = () => {
@@ -126,13 +134,12 @@ export default function FormComponent() {
               </div>
               <button
                 className="w-44 h-11 my-5 px-4 py-2 text-gray-800 font-semibold bg-white border-2 border-gray-800 rounded-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] transition duration-200 hover:bg-blue-500 hover:text-white active:shadow-none active:translate-x-1 active:translate-y-1"
-                onClick={handleNewTransaction}
-              >
+                onClick={handleNewTransaction}>
                 New Transfer
               </button>
             </div>
           ) : confirmationStep && transactionData ? (
-            <ConfirmTransactionComponent 
+            <ConfirmTransactionComponent
               transactionData={transactionData}
               amount={amount}
               onConfirm={handleConfirmTransaction}
@@ -142,12 +149,13 @@ export default function FormComponent() {
           ) : (
             <>
               <div className="my-5 text-2xl font-black text-center text-gray-800">
-                ROMAAR {user.cli_balance}
+                ROMAAR 
+
+                 {show && " $" + user.cli_balance}
               </div>
               <form
                 className="flex flex-col items-center gap-5"
-                onSubmit={handleSubmit}
-              >
+                onSubmit={handleSubmit}>
                 <input
                   className="w-full h-10 px-3 py-2 text-gray-800 font-semibold bg-white border-2 border-gray-800 rounded-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] outline-none focus:border-blue-500 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   placeholder="Recipient's phone number"
@@ -183,11 +191,16 @@ export default function FormComponent() {
                 <button
                   className="w-44 h-11 my-5 px-4 py-2 text-gray-800 font-semibold bg-white border-2 border-gray-800 rounded-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] transition duration-200 hover:bg-blue-500 hover:text-white active:shadow-none active:translate-x-1 active:translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed"
                   type="submit"
-                  disabled={isLoading}
-                >
+                  disabled={isLoading}>
                   {isLoading ? "Processing..." : "Send money"}
                 </button>
+        
               </form>
+                 <button
+                  className="w-44 h-11 my-2 px-4 py-2 text-gray-800 font-semibold bg-white border-2 border-gray-800 rounded-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] transition duration-200 hover:bg-blue-500 hover:text-white active:shadow-none active:translate-x-1 active:translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed"
+                  onClick={showInfo}>
+                  Monstrar saldo
+                </button>
             </>
           )}
         </div>

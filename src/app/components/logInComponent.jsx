@@ -29,10 +29,9 @@ export default function LogInComponent() {
     console.log("kk",response)
 
     const user = await response.json();
-
-    console.log("🫏🫏", user);
-
+    
     if (response.status === 200) {
+      console.log("✅✅✅✅✅", user)
       setUser(user);
       router.push("/home-page");
     } else {
