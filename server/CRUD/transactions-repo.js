@@ -88,7 +88,7 @@ async function _sendTransaction(req, res) {
   if (!recipient) {
     const status = await _sendTransactionToOtherBank(body, res);
     const message = _verifyStatus(status);
-    return res.status(status).send({ message: message });
+    return res.status(status).json({ message: message });
   }
 
   if (!canMakeTransaction(client.cli_balance, body.amount)) {
@@ -159,7 +159,7 @@ async function _sendTransactionToOtherBank(body) {
 
   if (response.status == 200) {
     const client = await db.Clients.findOne({ cli_id: body.clientId });
-    await updateBalance(amount * -1, client);
+    await updateBalance(body.amount * -1, client);
   }
 
   return response.status;
@@ -228,7 +228,7 @@ async function updateBalance(amount, account) {
     const data = await db.Clients.findOne({ cli_id: account.cli_id });
 
     if (!data) {
-      return res.status(404).json({ message: "Client not found" });
+      throw { status: 404, message: "Client not found" };
     }
 
     data.cli_balance = data.cli_balance + amount;
@@ -245,21 +245,23 @@ async function updateBalance(amount, account) {
 async function _reciveTransaction(req, res) {
   console.log(req.body);
   if (await !bankIsValid(req.body)) {
-    return res.status(404).send({ status: 500, message: "Api key no válida" });
+    return res.status(404).json({ status: 500, message: "Api key no válida" });
   }
   const client = await db.Clients.findOne({
-    cli_phone: body.recipientPhone,
+    cli_phone: req.body.num_receptor,
   });
 
+  console.log("client", client);
+
   if (!client) {
-    return res.status(404).send({ status: 404, message: "client not found" });
+    return res.status(404).json({ status: 404, message: "client not found" });
   }
 
-  await updateBalance(amount, client);
+  await updateBalance(req.body.monto, client);
 
   res
     .status(200)
-    .send({ status: 200, message: "Tranferencia recibida correctamente." });
+    .json({ status: 200, message: "Tranferencia recibida correctamente." });
 }
 
 async function bankIsValid(body) {
