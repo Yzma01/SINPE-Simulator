@@ -5,6 +5,7 @@ export const makeFetch = async (url, method, params, body) => {
     const apiURL = `${baseUrl + url}${
       params !== "" || params === undefined? "/" + params : ""
     }`;
+    console.log("hika" , baseUrl)
     
   const response = await fetch(apiURL, {
     method: method,

@@ -41,6 +41,11 @@ app.post("/client", addClient);
 app.post("/transaction/send", sendTransaction);
 app.post("/transaction/confirm", confirmTransaction);
 
+app.post("/recibir-sinpe", (req, res)=>{
+  console.log("body de recibir sinpe: ",req.body);
+  res.status(200).json({message: "Recibido!"});
+})
+
 const httpsServer = https.createServer(credentials, app);
 
 httpsServer.listen(PORT, () => {

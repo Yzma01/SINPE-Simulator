@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { Client, Transaction} from "./models.js";
 
 mongoose
-  .connect("mongodb://localhost:27017/romar")
+  .connect("mongodb://localhost:27017/romar") //!luego meter en .env
   .then(() => {
     console.log("MongoDB connected successfully");
   })
