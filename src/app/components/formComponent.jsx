@@ -43,9 +43,14 @@ export default function FormComponent() {
       recipientPhone: recipientPhone,
     };
 
+    console.log("object", body)
     try {
+      console.log("🍫🍫")
       const response = await makeFetch("/transaction/send", "POST", "", body);
+      console.log("✅✅✅");
+      console.log("haaaaaaaaaaaaaaaa", await response.json());
       const data = await response.json();
+
       
       console.log(data);
 
@@ -137,7 +142,7 @@ export default function FormComponent() {
           ) : (
             <>
               <div className="my-5 text-2xl font-black text-center text-gray-800">
-                ROMAAR
+                ROMAAR {user.cli_balance}
               </div>
               <form
                 className="flex flex-col items-center gap-5"
