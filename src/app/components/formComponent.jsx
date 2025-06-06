@@ -137,7 +137,7 @@ export default function FormComponent() {
           ) : (
             <>
               <div className="my-5 text-2xl font-black text-center text-gray-800">
-                ROMAAR
+                ROMAAR ${user.cli_balance}
               </div>
               <form
                 className="flex flex-col items-center gap-5"

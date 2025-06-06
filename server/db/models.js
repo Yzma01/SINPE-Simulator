@@ -15,7 +15,6 @@ const Client = mongoose.models.Client || mongoose.model("Client", ClientSchema);
 export { Client };
 
 const TransactionSchema = new mongoose.Schema({
-  tra_id: { type: Number, unique: true },
   tra_num_emisor: { type: String, required: true },
   tra_num_receptor: { type: String, required: true },
   tra_amount: { type: Number, required: true },
