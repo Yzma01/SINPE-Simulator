@@ -5,6 +5,7 @@ import { getClient, addClient } from "./controllers/client-controller.js";
 import {
   sendTransaction,
   confirmTransaction,
+  reciveTransaction,
 } from "./controllers/transaction-controller.js";
 import https from "https";
 import fs from "fs";
@@ -41,10 +42,7 @@ app.post("/client", addClient);
 app.post("/transaction/send", sendTransaction);
 app.post("/transaction/confirm", confirmTransaction);
 
-app.post("/recibir-sinpe", (req, res)=>{
-  console.log("body de recibir sinpe: ",req.body);
-  res.status(200).json({message: "Recibido!"});
-})
+app.post("/recibir-sinpe", reciveTransaction)
 
 const httpsServer = https.createServer(credentials, app);
 

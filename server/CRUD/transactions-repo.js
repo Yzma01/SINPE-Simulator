@@ -1,11 +1,15 @@
 import { makeFetch } from "../../src/app/utils/fetch.js";
 import { db } from "../db/connection.js";
 import { serverFetch } from "../utils/serverFetch.js";
-import { createTransactionToken, verifyTransactionToken } from "../utils/token.js";
+import {
+  createTransactionToken,
+  verifyTransactionToken,
+} from "../utils/token.js";
 
 export const transactionsRepo = {
   _sendTransaction,
   _confirmTransaction,
+  _reciveTransaction,
 };
 
 {
@@ -83,6 +87,8 @@ async function _sendTransaction(req, res) {
 
   if (!recipient) {
     const status = await _sendTransactionToOtherBank(body, res);
+    const message = _verifyStatus(status);
+    return res.status(status).send({ message: message });
   }
 
   if (!canMakeTransaction(client.cli_balance, body.amount)) {
@@ -114,16 +120,8 @@ async function _sendTransaction(req, res) {
   });
 }
 
-async function _sendTransactionToOtherBank(body, res) {
-  //! enviar afuera
-  // TODO sacar el prefijo del número 69xxxxxxxx
-  // TODO sacar la ruta del banco con https://[ip]/get_api_key/[prefijo]
-  // TODO Agregar el api_key del banco emisor, nuestro banco, al body de la petición
-  // TODO enviar la petición a la ruta
-
+async function _sendTransactionToOtherBank(body) {
   const prefix = body.recipientPhone.substring(0, 2);
-
-  console.log("first: ", process.env.GET_API_KEY_URL);
 
   const responseDestinationBank = await serverFetch(
     process.env.GET_API_KEY_URL,
@@ -143,8 +141,14 @@ async function _sendTransactionToOtherBank(body, res) {
   const issuingBankData = await responseIssuingBank.json();
   console.log("emisor: ", issuingBankData);
 
-  const newBody = { ...body, key_emisor: issuingBankData.api_key };
-  console.log("newbody: ", newBody);
+  const newBody = {
+    num_emisor: body.emisorPhone,
+    key_emisor: issuingBankData.api_key,
+    monto: body.amount,
+    num_receptor: body.recipientPhone,
+    detalle: body.details,
+    fecha: new Date(),
+  };
 
   const response = await serverFetch(
     destinationBankData.route,
@@ -153,13 +157,12 @@ async function _sendTransactionToOtherBank(body, res) {
     newBody
   );
 
-  if (response && response.status == 200) {
-    //guardar transacción
-    return res.status(200).json({ message: "Money Sent" });
-  }else{
-    return res.status(404).json({message: "Bank not found"});
+  if (response.status == 200) {
+    const client = await db.Clients.findOne({ cli_id: body.clientId });
+    await updateBalance(amount * -1, client);
   }
-  return res.status(500).json({ message: "Internal Server Error" });
+
+  return response.status;
 }
 
 async function _confirmTransaction(req, res) {
@@ -172,36 +175,27 @@ async function _confirmTransaction(req, res) {
       .json({ message: "Invalid Token or already expired" });
   }
 
-
-  console.log("payload: ",payload);
-
   const { clientId, recipientId, lastClientBalance, amount, body } = payload;
 
   const client = await db.Clients.findOne({ cli_id: clientId });
 
-  console.log("client: ",client);
+  console.log("client: ", client);
 
   if (!client) {
     return res.status(404).json({ message: "Client not found" });
   }
-
-  // if (used) {
-  //   return res.status(403).json({ message: "Token already used" });
-  // }
 
   if (lastClientBalance != client.cli_balance) {
     return res.status(403).json({ message: "Token already used" });
   }
 
   const recipient = await db.Clients.findOne({ cli_id: recipientId });
-  
-  console.log("recipient: ",recipient);
+
+  console.log("recipient: ", recipient);
 
   if (!recipient) {
     return res.status(404).json({ message: "Recipient not found" });
   }
-
-  console.log("antes de")
 
   if (!canMakeTransaction(client.cli_balance, amount)) {
     return res.status(507).json({ message: "Not enough money" });
@@ -211,7 +205,7 @@ async function _confirmTransaction(req, res) {
 
   await updateBalance(amount, recipient);
 
-  const transaction = new db.Transactions( {
+  const transaction = new db.Transactions({
     tra_num_emisor: body.emisorPhone,
     tra_num_receptor: body.recipientPhone,
     tra_amount: body.amount,
@@ -219,7 +213,7 @@ async function _confirmTransaction(req, res) {
     tra_date: new Date(),
   });
 
-  console.log(body)
+  console.log(body);
   console.log(transaction);
 
   await transaction.save();
@@ -242,14 +236,58 @@ async function updateBalance(amount, account) {
     await data.save();
   } catch (error) {
     throw {
-      status: 404,
-      message: "No se pudo modificar los daos del cliente",
+      status: 500,
+      message: "No se pudo modificar los datos del cliente",
     };
   }
+}
+
+async function _reciveTransaction(req, res) {
+  if (await !bankIsValid(req.body)) {
+    return res.status(404).send({ status: 500, message: "Api key no válida" });
+  }
+  const client = await db.Clients.findOne({
+    cli_phone: body.recipientPhone,
+  });
+
+  if (!client) {
+    return res.status(404).send({ status: 404, message: "client not found" });
+  }
+
+  await updateBalance(amount, client);
+
+  res
+    .status(200)
+    .send({ status: 200, message: "Tranferencia recibida correctamente." });
+}
+
+async function bankIsValid(body) {
+  const prefix = body.num_emisor.substring(0, 2);
+  const response = await serverFetch(
+    process.env.GET_API_KEY_URL,
+    "GET",
+    prefix
+  );
+  const data = await response.json();
+  if (body.key_emisor === data.api_key) {
+    return true;
+  }
+  return false;
 }
 
 function canMakeTransaction(balance, amount) {
   if (balance == 0 || balance < 0) return false;
   if (amount > balance) return false;
   return true;
+}
+
+function _verifyStatus(status) {
+  switch (status) {
+    case 200:
+      return "Transferencia enviada con éxito.";
+    case 404:
+      return "Client not found";
+    case 500:
+      return "Internal server error";
+  }
 }
