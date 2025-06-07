@@ -159,7 +159,8 @@ async function _sendTransactionToOtherBank(body) {
 
   if (response.status == 200) {
     const client = await db.Clients.findOne({ cli_id: body.clientId });
-    await updateBalance(body.amount * -1, client);
+    const updateResponse = await updateBalance(body.amount * -1, client);
+    if(updateResponse && updateResponse.status !== 200) return updateResponse.status;
   }
 
   return response.status;
@@ -171,7 +172,7 @@ async function _confirmTransaction(req, res) {
 
   if (!payload) {
     return res
-      .status(400)
+      .status(498)
       .json({ message: "Invalid Token or already expired" });
   }
 
@@ -186,7 +187,7 @@ async function _confirmTransaction(req, res) {
   }
 
   if (lastClientBalance != client.cli_balance) {
-    return res.status(403).json({ message: "Token already used" });
+    return res.status(226).json({ message: "Token already used" });
   }
 
   const recipient = await db.Clients.findOne({ cli_id: recipientId });
@@ -194,7 +195,7 @@ async function _confirmTransaction(req, res) {
   console.log("recipient: ", recipient);
 
   if (!recipient) {
-    return res.status(404).json({ message: "Recipient not found" });
+    return res.status(523).json({ message: "Recipient not found" });
   }
 
   if (!canMakeTransaction(client.cli_balance, amount)) {
@@ -212,9 +213,6 @@ async function _confirmTransaction(req, res) {
     tra_details: body.details,
     tra_date: new Date(),
   });
-
-  console.log(body);
-  console.log(transaction);
 
   await transaction.save();
 
@@ -234,9 +232,11 @@ async function updateBalance(amount, account) {
     data.cli_balance = data.cli_balance + amount;
 
     await data.save();
+    throw { status: 200 };
   } catch (error) {
     throw {
-      status: 500,
+      status: 304,
+      error: error.message,
       message: "No se pudo modificar los datos del cliente",
     };
   }
@@ -245,19 +245,19 @@ async function updateBalance(amount, account) {
 async function _reciveTransaction(req, res) {
   console.log(req.body);
   if (await !bankIsValid(req.body)) {
-    return res.status(404).json({ status: 500, message: "Api key no válida" });
+    return res.status(400).json({ status: 500, message: "Api key no válida" });
   }
   const client = await db.Clients.findOne({
     cli_phone: req.body.num_receptor,
   });
-
-  console.log("client", client);
 
   if (!client) {
     return res.status(404).json({ status: 404, message: "client not found" });
   }
 
   await updateBalance(req.body.monto, client);
+
+   console.log("client", client);
 
   res
     .status(200)
@@ -290,6 +290,8 @@ function _verifyStatus(status) {
       return "Transferencia enviada con éxito.";
     case 404:
       return "Client not found";
+    case 304:
+      return "No se puedo modificar los datos del cliente";
     case 500:
       return "Internal server error";
   }

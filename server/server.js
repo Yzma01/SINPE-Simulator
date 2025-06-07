@@ -22,7 +22,7 @@ app.use(cors({
   credentials: true
 }));
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 
 const privateKey = fs.readFileSync("../key.pem", "utf8");
 const certificate = fs.readFileSync("../cert.pem", "utf8");
