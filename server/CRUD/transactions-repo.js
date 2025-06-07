@@ -12,8 +12,8 @@ export const transactionsRepo = {
   _reciveTransaction,
 };
 
+/*
 {
-  /*
     Status codes: 
         //! 204 not content (body)
         //! 404 no user found
@@ -65,8 +65,8 @@ export const transactionsRepo = {
             }  
         },
     ]
-*/
-}
+  }
+  */
 
 async function _sendTransaction(req, res) {
   const body = req.body;
@@ -86,7 +86,7 @@ async function _sendTransaction(req, res) {
   });
 
   if (!recipient) {
-    const status = await _sendTransactionToOtherBank(body, res);
+    const status = await _sendTransactionToOtherBank(body);
     const message = _verifyStatus(status);
     return res.status(status).json({ message: message });
   }
@@ -130,7 +130,7 @@ async function _sendTransactionToOtherBank(body) {
   );
 
   const destinationBankData = await responseDestinationBank.json();
-  console.log("destino: ", destinationBankData);
+  console.log("destino: ", { ...destinationBankData });
 
   const responseIssuingBank = await serverFetch(
     process.env.GET_API_KEY_URL,
@@ -139,7 +139,7 @@ async function _sendTransactionToOtherBank(body) {
   );
 
   const issuingBankData = await responseIssuingBank.json();
-  console.log("emisor: ", issuingBankData);
+  console.log("emisor: ", { ...issuingBankData });
 
   const newBody = {
     num_emisor: body.emisorPhone,
@@ -149,6 +149,9 @@ async function _sendTransactionToOtherBank(body) {
     detalle: body.details,
     fecha: new Date(),
   };
+
+  console.log("newBody", newBody);
+  console.log("destinationBankData", destinationBankData);
 
   const response = await serverFetch(
     destinationBankData.route,
@@ -171,7 +174,7 @@ async function _confirmTransaction(req, res) {
 
   if (!payload) {
     return res
-      .status(400)
+      .status(498)
       .json({ message: "Invalid Token or already expired" });
   }
 
@@ -186,7 +189,7 @@ async function _confirmTransaction(req, res) {
   }
 
   if (lastClientBalance != client.cli_balance) {
-    return res.status(403).json({ message: "Token already used" });
+    return res.status(226).json({ message: "Token already used" });
   }
 
   const recipient = await db.Clients.findOne({ cli_id: recipientId });
@@ -194,7 +197,7 @@ async function _confirmTransaction(req, res) {
   console.log("recipient: ", recipient);
 
   if (!recipient) {
-    return res.status(404).json({ message: "Recipient not found" });
+    return res.status(523).json({ message: "Recipient not found" });
   }
 
   if (!canMakeTransaction(client.cli_balance, amount)) {
@@ -212,9 +215,6 @@ async function _confirmTransaction(req, res) {
     tra_details: body.details,
     tra_date: new Date(),
   });
-
-  console.log(body);
-  console.log(transaction);
 
   await transaction.save();
 
@@ -235,8 +235,10 @@ async function updateBalance(amount, account) {
 
     await data.save();
   } catch (error) {
+    console.log(error);
     throw {
-      status: 500,
+      status: 304,
+      error: error.message,
       message: "No se pudo modificar los datos del cliente",
     };
   }
@@ -245,13 +247,11 @@ async function updateBalance(amount, account) {
 async function _reciveTransaction(req, res) {
   console.log(req.body);
   if (await !bankIsValid(req.body)) {
-    return res.status(404).json({ status: 500, message: "Api key no válida" });
+    return res.status(400).json({ status: 500, message: "Api key no válida" });
   }
   const client = await db.Clients.findOne({
     cli_phone: req.body.num_receptor,
   });
-
-  console.log("client", client);
 
   if (!client) {
     return res.status(404).json({ status: 404, message: "client not found" });
@@ -259,7 +259,9 @@ async function _reciveTransaction(req, res) {
 
   await updateBalance(req.body.monto, client);
 
-  res
+  console.log("client", client);
+
+  return res
     .status(200)
     .json({ status: 200, message: "Tranferencia recibida correctamente." });
 }
@@ -286,11 +288,13 @@ function canMakeTransaction(balance, amount) {
 
 function _verifyStatus(status) {
   switch (status) {
+    case 500:
+      return "Internal server error";
     case 200:
       return "Transferencia enviada con éxito.";
     case 404:
       return "Client not found";
-    case 500:
-      return "Internal server error";
+    case 304:
+      return "No se puedo modificar los datos del cliente";
   }
 }
