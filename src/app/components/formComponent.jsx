@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useUser } from "../Providers/userProvider";
 import { makeFetch } from "../utils/fetch";
 import ConfirmTransactionComponent from "./confirmTransactionComponent";
+import toast from "react-hot-toast";
+import { toastHandler } from "../utils/toastHandler";
 
 export default function FormComponent() {
   const [amount, setAmount] = useState("");
@@ -19,8 +21,10 @@ export default function FormComponent() {
 
   const [show, setShow] = useState(false);
 
-  const {user} = useUser();
-  console.log("papapappaa:", user)
+  const { user } = useUser();
+  console.log("papapappaa:", user);
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,11 +55,12 @@ export default function FormComponent() {
     try {
       console.log("🍫🍫");
       const response = await makeFetch("/transaction/send", "POST", "", body);
-      console.log("✅✅✅");
+      console.log("✅✅✅", response.status);
 
       const data = await response.json();
+      console.log("aaa", data);
 
-      console.log(data);
+      toastHandler(response, data);
 
       if (data && data.token) {
         setTransactionData(data);
@@ -65,6 +70,7 @@ export default function FormComponent() {
       }
     } catch (error) {
       console.error("Transaction error:", error);
+      toast.error("Error ❌");
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -83,6 +89,8 @@ export default function FormComponent() {
       const confirmResponse = await response.json();
       console.log(confirmResponse);
 
+      toastHandler(response, confirmResponse);
+
       if (confirmResponse.voucher) {
         setConfirmationStep(false);
         setShowConfirmation(true);
@@ -91,6 +99,7 @@ export default function FormComponent() {
       }
     } catch (error) {
       console.error("Confirmation error:", error);
+      toast.error("Error ❌");
       setError("An error occurred during confirmation. Please try again.");
     } finally {
       setIsLoading(false);
@@ -103,7 +112,7 @@ export default function FormComponent() {
   };
 
   const showInfo = () => {
-    console.log("❌❌❌")
+    console.log("❌❌❌");
     setShow(true);
   };
 
@@ -149,9 +158,8 @@ export default function FormComponent() {
           ) : (
             <>
               <div className="my-5 text-2xl font-black text-center text-gray-800">
-                ROMAAR 
-
-                 {show && " $" + user.cli_balance}
+                ROMAAR
+                {show && " $" + user.cli_balance}
               </div>
               <form
                 className="flex flex-col items-center gap-5"
@@ -194,13 +202,12 @@ export default function FormComponent() {
                   disabled={isLoading}>
                   {isLoading ? "Processing..." : "Send money"}
                 </button>
-        
               </form>
-                 <button
-                  className="w-44 h-11 my-2 px-4 py-2 text-gray-800 font-semibold bg-white border-2 border-gray-800 rounded-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] transition duration-200 hover:bg-blue-500 hover:text-white active:shadow-none active:translate-x-1 active:translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed"
-                  onClick={showInfo}>
-                  Monstrar saldo
-                </button>
+              <button
+                className="w-44 h-11 my-2 px-4 py-2 text-gray-800 font-semibold bg-white border-2 border-gray-800 rounded-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.8)] transition duration-200 hover:bg-blue-500 hover:text-white active:shadow-none active:translate-x-1 active:translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed"
+                onClick={showInfo}>
+                Monstrar saldo
+              </button>
             </>
           )}
         </div>

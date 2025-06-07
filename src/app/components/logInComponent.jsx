@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import SignUpComponent from "./signUpComponent";
 import { useUser } from "../Providers/userProvider";
 import { makeFetch } from "@/app/utils/fetch.js";
+import { toastHandler } from "../utils/toastHandler";
+import toast from "react-hot-toast";
+
 
 export default function LogInComponent() {
   const [chageSignUp, setChangeSignUp] = useState(true);
@@ -25,17 +28,24 @@ export default function LogInComponent() {
       password: password,
     };
 
-    response = await makeFetch("/client", "PUT", "", body);
-    console.log("kk",response)
+    try {
+      response = await makeFetch("/client", "PUT", "", body);
+      console.log("kk", response);
 
-    const user = await response.json();
-    
-    if (response.status === 200) {
-      console.log("✅✅✅✅✅", user)
-      setUser(user);
-      router.push("/home-page");
-    } else {
-      setChangeSignUp(false);
+      const user = await response.json();
+
+      toastHandler(response, user);
+
+      if (response.status === 200) {
+        console.log("✅✅✅✅✅", user);
+        setUser(user);
+        router.push("/home-page");
+      } else {
+        setChangeSignUp(false);
+      }
+    } catch (error) {
+      console.log("error", error)
+      toast.error("Error ❌");
     }
   };
 

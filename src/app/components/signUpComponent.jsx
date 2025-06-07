@@ -2,6 +2,9 @@
 import React, { useState } from "react";
 import { makeFetch } from "@/app/utils/fetch.js";
 import { useRouter } from "next/navigation";
+import { toastHandler } from "../utils/toastHandler";
+import toast from "react-hot-toast";
+
 
 export default function SignUpComponent({ show }) {
   const [changeLogIn, setChangeLogIn] = useState(false); //luego lo quto
@@ -31,10 +34,17 @@ export default function SignUpComponent({ show }) {
 
     console.log(body);
 
-    const response = await makeFetch("/client", "POST", "", body);
-    if (response.status === 201) {
-      alert("User created successfully");
-      setChangeLogIn(true); //luego lo quitp
+    try {
+      const response = await makeFetch("/client", "POST", "", body);
+      const data = await response.json();
+      // if (response.status === 201) {
+      //   alert("User created successfully");
+      //   setChangeLogIn(true); //luego lo quitp
+      // }
+      toastHandler(response, data);
+    } catch (error) {
+      console.log("error", error);
+      toast.error("Error ❌");
     }
   };
 
