@@ -12,8 +12,8 @@ export const transactionsRepo = {
   _reciveTransaction,
 };
 
+/*
 {
-  /*
     Status codes: 
         //! 204 not content (body)
         //! 404 no user found
@@ -65,8 +65,8 @@ export const transactionsRepo = {
             }  
         },
     ]
-*/
-}
+  }
+  */
 
 async function _sendTransaction(req, res) {
   const body = req.body;
@@ -86,7 +86,7 @@ async function _sendTransaction(req, res) {
   });
 
   if (!recipient) {
-    const status = await _sendTransactionToOtherBank(body, res);
+    const status = await _sendTransactionToOtherBank(body);
     const message = _verifyStatus(status);
     return res.status(status).json({ message: message });
   }
@@ -130,7 +130,7 @@ async function _sendTransactionToOtherBank(body) {
   );
 
   const destinationBankData = await responseDestinationBank.json();
-  console.log("destino: ", destinationBankData);
+  console.log("destino: ", { ...destinationBankData });
 
   const responseIssuingBank = await serverFetch(
     process.env.GET_API_KEY_URL,
@@ -139,7 +139,7 @@ async function _sendTransactionToOtherBank(body) {
   );
 
   const issuingBankData = await responseIssuingBank.json();
-  console.log("emisor: ", issuingBankData);
+  console.log("emisor: ", { ...issuingBankData });
 
   const newBody = {
     num_emisor: body.emisorPhone,
@@ -150,6 +150,9 @@ async function _sendTransactionToOtherBank(body) {
     fecha: new Date(),
   };
 
+  console.log("newBody", newBody);
+  console.log("destinationBankData", destinationBankData);
+
   const response = await serverFetch(
     destinationBankData.route,
     "POST",
@@ -159,8 +162,7 @@ async function _sendTransactionToOtherBank(body) {
 
   if (response.status == 200) {
     const client = await db.Clients.findOne({ cli_id: body.clientId });
-    const updateResponse = await updateBalance(body.amount * -1, client);
-    if(updateResponse && updateResponse.status !== 200) return updateResponse.status;
+    await updateBalance(body.amount * -1, client);
   }
 
   return response.status;
@@ -232,8 +234,8 @@ async function updateBalance(amount, account) {
     data.cli_balance = data.cli_balance + amount;
 
     await data.save();
-    throw { status: 200 };
   } catch (error) {
+    console.log(error);
     throw {
       status: 304,
       error: error.message,
@@ -257,9 +259,9 @@ async function _reciveTransaction(req, res) {
 
   await updateBalance(req.body.monto, client);
 
-   console.log("client", client);
+  console.log("client", client);
 
-  res
+  return res
     .status(200)
     .json({ status: 200, message: "Tranferencia recibida correctamente." });
 }
@@ -286,13 +288,13 @@ function canMakeTransaction(balance, amount) {
 
 function _verifyStatus(status) {
   switch (status) {
+    case 500:
+      return "Internal server error";
     case 200:
       return "Transferencia enviada con éxito.";
     case 404:
       return "Client not found";
     case 304:
       return "No se puedo modificar los datos del cliente";
-    case 500:
-      return "Internal server error";
   }
 }
