@@ -147,7 +147,6 @@ async function _sendTransactionToOtherBank(body) {
     monto: body.amount,
     num_receptor: body.recipientPhone,
     detalle: body.details,
-    fecha: new Date(),
   };
 
   console.log("newBody", newBody);

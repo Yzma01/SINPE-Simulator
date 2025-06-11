@@ -12,12 +12,15 @@ import fs from "fs";
 import dotenv from "dotenv";
 import path from "path";
 
+
 dotenv.config();
 
 const app = express();
 
+// ip='192.168.0.66';
+
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: 'http://localhost:3000', //!Cambiar en clase
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));

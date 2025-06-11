@@ -21,9 +21,24 @@ async function _addClient(req, res) {
       cli_password,
     } = req.body;
 
-    clientExists(cli_id, res);
-    phoneExists(cli_password, res);
-    emailExist(cli_email, res);
+    // clientExists(cli_id, res);
+    // phoneExists(cli_password, res);
+    // emailExist(cli_email, res);
+
+    const existingClient = await db.Clients.findOne({ cli_id: id });
+    if (existingClient) {
+      return res.status(208).json({ message: "Client already exists" });
+    }
+
+    const existingPhone = await db.Clients.find({ cli_phone: phone });
+    if (existingPhone) {
+      return res.status(207).json({ message: "Phone already exists." });
+    }
+
+    const existingEmail = await db.Clients.find({ cli_email: email });
+    if (existingEmail) {
+      return res.status(226).json({ message: "Email already exists." });
+    }
 
     const newClient = new db.Clients({
       cli_id,
@@ -47,24 +62,24 @@ async function _addClient(req, res) {
 }
 
 async function clientExists(id, res) {
-  const existingClient = await db.Clients.findOne({ cli_id: id });
-  if (existingClient) {
-    return res.status(208).json({ message: "Client already exists" });
-  }
+  // const existingClient = await db.Clients.findOne({ cli_id: id });
+  // if (existingClient) {
+  //   return res.status(208).json({ message: "Client already exists" });
+  // }
 }
 
 async function phoneExists(phone, res) {
-  const existingPhone = await db.Clients.find({ cli_phone: phone });
-  if (existingPhone) {
-    return res.status(207).json({ message: "Phone already exists." });
-  }
+  // const existingPhone = await db.Clients.find({ cli_phone: phone });
+  // if (existingPhone) {
+  //   return res.status(207).json({ message: "Phone already exists." });
+  // }
 }
 
 async function emailExist(email, res) {
-  const existingEmail = await db.Clients.find({ cli_email: email });
-  if (existingEmail) {
-    return res.status(226).json({ message: "Email already exists." });
-  }
+  // const existingEmail = await db.Clients.find({ cli_email: email });
+  // if (existingEmail) {
+  //   return res.status(226).json({ message: "Email already exists." });
+  // }
 }
 
 async function _getClient(req, res) {
